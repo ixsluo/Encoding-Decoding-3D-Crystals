@@ -164,3 +164,12 @@ class AttU_Net3D(nn.Module):
         d1 = self.Conv3D_1x1(d2)
         d1 = self.sig(d1)
         return d1
+
+if __name__ == "__main__":
+    from torchsummary import summary
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print('Device: {}'.format(device))
+    net = AttU_Net3D().to(device)
+    summary(model=net, input_size=(1, 30, 30, 30))
+    #print(net)

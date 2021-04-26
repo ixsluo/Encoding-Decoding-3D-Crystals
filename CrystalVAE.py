@@ -2,6 +2,7 @@
 # Code written by Jordan
 from __future__ import print_function
 import argparse
+from operator import mod
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -11,6 +12,7 @@ import pickle
 import numpy as np
 from torch.utils.data.dataset import Dataset
 from pymatgen.core.structure import Structure
+from torchsummary import summary
 
 class Flatten(nn.Module):
     '''
@@ -23,7 +25,7 @@ class Flatten(nn.Module):
 class UnFlatten(nn.Module):
     # Convert to 3d matrices
     def forward(self, input, size=1024):
-            return input.view(input.size(0), 256, 5, 5, 5)
+            return input.view(input.size(0), 256, 4, 4, 4)
 
 class Interpolate(nn.Module):
     '''
@@ -51,13 +53,13 @@ class CVAE(nn.Module):
             nn.Conv3d(input_channels, 16, kernel_size=5, stride=2),
             nn.BatchNorm3d(16),
             nn.LeakyReLU(),
-            nn.Conv3d(16, 32, kernel_size=3, stride=1),
+            nn.Conv3d(16, 32, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm3d(32),
             nn.LeakyReLU(),
-            nn.Conv3d(32, 64, kernel_size=3, stride=1),
+            nn.Conv3d(32, 64, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm3d(64),
             nn.LeakyReLU(),
-            nn.Conv3d(64, 128, kernel_size=3, stride=2),
+            nn.Conv3d(64, 128, kernel_size=3, stride=2, padding=1),
             nn.BatchNorm3d(128),
             nn.LeakyReLU(),
             nn.Conv3d(128, 256, kernel_size=3, stride=2),
@@ -124,7 +126,7 @@ class CVAE(nn.Module):
         z, mu, logvar = self.bottleneck(h)
         return z, mu, logvar
 
-    def decode(self, z, label):
+    def decode(self, z):
         z = self.fc3(z)
         z = self.fc4(z)
         z = self.decoder(z)
@@ -134,3 +136,7 @@ class CVAE(nn.Module):
         z, mu, logvar = self.encode(x)
         z = self.decode(z)
         return z, mu, logvar
+
+if __name__ == '__main__':
+    model = CVAE().to('cuda')
+    summary(model=model, input_size=(1, 40, 40, 40))

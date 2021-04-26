@@ -13,8 +13,10 @@ from dataset import *
 from CrystalVAE import *
 from Discriminator import *
 from Segmentation import *
+from tqdm import tqdm
 
 
+result_dir = '/home/luoxs/data_preperation/result/'
 
 def loss_MSE(recon_x, x, mu, logvar,epoch):
     BCE = F.mse_loss(recon_x, x, size_average=True)
@@ -31,7 +33,7 @@ def loss_BCE(recon_x, x, mu, logvar,epoch):
 
 def train(args, model, device, train_loader, optimizer, epoch ,UNet, optimizer2,):
         model.train()
-        for batch_idx, (data,  target,label, abcangles, species_mat) in enumerate(train_loader):
+        for (data,  target,label, species_mat) in tqdm(train_loader):
 
                 data, target = data.to(device), target.to(device)
                 species_mat = species_mat.to(device)
@@ -62,7 +64,7 @@ def test(args, model, device, test_loader, epoch,unet):
         with torch.no_grad():
                 i = 0
                 counter = 0
-                for data, target,  label , abcangles, species_mat in test_loader:
+                for data, target,  label , species_mat in test_loader:
                         # Send the data to the device (GPU)
                         data, target = data.to(device), target.to(device)
                         species_mat = species_mat.to(device)
@@ -85,13 +87,13 @@ def test(args, model, device, test_loader, epoch,unet):
                                 PREDICTION = outputNP3[ii]
                                 TARGET     = targetNP3[ii]
                                 mat1 = PREDICTION.flatten()
-                                np.savetxt('/SAVE/DIRECTORY/ElectronDensity_Pred_'+str(counter)+'_'+str(epoch)+'.csv',mat1)
+                                np.savetxt(result_dir + 'ElectronDensity_Pred_'+str(counter)+'_'+str(epoch)+'.csv',mat1)
                                 mat1 = TARGET.flatten()
-                                np.savetxt('/SAVE/DIRECTORY/ElectronDensity_True_'+str(counter)+'_'+str(epoch)+'.csv',mat1)
+                                np.savetxt(result_dir + 'ElectronDensity_True_'+str(counter)+'_'+str(epoch)+'.csv',mat1)
                                 species_mat_True = species_mat[ii].argmax(axis=0)
                                 species_mat_Pred = species_pred[ii].argmax(axis=0)
-                                np.savetxt('/SAVE/DIRECTORY/Species_True_'+str(counter)+'_'+str(epoch)+'.csv',species_mat_True.flatten().astype(int),fmt='%i')
-                                np.savetxt('/SAVE/DIRECTORY/Species_Pred_'+str(counter)+'_'+str(epoch)+'.csv',species_mat_Pred.flatten().astype(int),fmt='%i')
+                                np.savetxt(result_dir + 'Species_True_'+str(counter)+'_'+str(epoch)+'.csv',species_mat_True.flatten().astype(int),fmt='%i')
+                                np.savetxt(result_dir + 'Species_Pred_'+str(counter)+'_'+str(epoch)+'.csv',species_mat_Pred.flatten().astype(int),fmt='%i')
                                 counter += 1
 
                         i += 1
